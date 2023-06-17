@@ -48,8 +48,6 @@ jobs:
         name: Try build
       - run: cargo build --release
         name: Try release build
-      - name: Start k8s cluster
-        run: kind create cluster --name kind
       - name: Run test
         run: just test
       - name: Run e2e test
