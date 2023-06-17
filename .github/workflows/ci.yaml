@@ -121,14 +121,20 @@ jobs:
           tag_name: ${{ steps.release.outputs.version }}
   add-binaries:
     needs: release
-    name: Build release binaries for ${{ matrix.target }}
-    runs-on: ubuntu-latest
+    name: Build release binaries for ${{ matrix.destination.target }}
+    runs-on: ${{ matrix.destination.os }}
     permissions:
       contents: "write"
     strategy:
       fail-fast: false
       matrix:
-        target: [ x86_64-pc-windows-gnu, x86_64-unknown-linux-musl, x86_64-apple-darwin ]
+        destination:
+          - target: x86_64-pc-windows-gnu
+            os: windows-latest
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
     steps:
       - uses: actions/checkout@master
       - run: sudo apt-get -y install libasound2-dev
@@ -136,6 +142,6 @@ jobs:
         uses: "taiki-e/upload-rust-binary-action@v1"
         with:
           bin: "story-time"
-          target: ${{ matrix.target }}
+          target: ${{ matrix.destination.target }}
           ref: refs/tags/v${{ needs.release.outputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
