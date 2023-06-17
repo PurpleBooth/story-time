@@ -133,11 +133,14 @@ jobs:
             os: windows-latest
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
+            additional: sudo apt-get -y install libasound2-dev
           - target: x86_64-apple-darwin
             os: macos-latest
     steps:
       - uses: actions/checkout@master
-      - run: sudo apt-get -y install libasound2-dev
+      - if: matrix.destination.additional != ''
+        name: Install additional dependencies
+        run: ${{ matrix.destination.additional }}
       - name: "Upload Binaries"
         uses: "taiki-e/upload-rust-binary-action@v1"
         with:
