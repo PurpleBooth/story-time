@@ -2,6 +2,22 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v0.1.1](https://github.com/PurpleBooth/story-time/compare/v0.1.0..v0.1.1) - 2023-06-17
+#### Bug Fixes
+- Build binaries - ([24b9c84](https://github.com/PurpleBooth/story-time/commit/24b9c8454033e151856ea4672532a02eb592240f)) - Billie Thompson
+#### Build system
+- Switch to rustls-tls for calls to the voice service - ([5aac5c0](https://github.com/PurpleBooth/story-time/commit/5aac5c0cbc912a40238c9af21207311081545f3f)) - Billie Thompson
+#### Continuous Integration
+- **(deps)** Bump actions/checkout from 2 to 3 - ([4d0dfc6](https://github.com/PurpleBooth/story-time/commit/4d0dfc6e672f519dfd9fd3580f6ab7357f5155d0)) - dependabot[bot]
+- Install dependency for alsa in release step - ([e5003b1](https://github.com/PurpleBooth/story-time/commit/e5003b1eb204a797cc2eba8c90f3f227a1c023a2)) - Billie Thompson
+- Install dependency for alsa in release step - ([d47262f](https://github.com/PurpleBooth/story-time/commit/d47262f28a0de0d7a5d82496e0327e49167e709c)) - Billie Thompson
+- Only build binaries if it is a release - ([839605f](https://github.com/PurpleBooth/story-time/commit/839605f826ab80d3ec2482596d4cb97b8525eecc)) - Billie Thompson
+- Use gnu rather than musl for builds - ([5dc1708](https://github.com/PurpleBooth/story-time/commit/5dc17087c78a126f350c6023035485b96ff60ab3)) - Billie Thompson
+- Install needed deps - ([4e38370](https://github.com/PurpleBooth/story-time/commit/4e383706d83308e565d7f396b2acc19405f6d16f)) - Billie Thompson
+- Build natively - ([eb4709f](https://github.com/PurpleBooth/story-time/commit/eb4709fd2e633991067f4df294c57d312cbe4966)) - Billie Thompson
+
+- - -
+
 ## [v0.1.0](https://github.com/PurpleBooth/story-time/compare/2a15d2fa63cf80aa13617d6db8a1df0c33091f0b..v0.1.0) - 2023-06-17
 #### Continuous Integration
 - Remove starting k8s - ([f59fa6f](https://github.com/PurpleBooth/story-time/commit/f59fa6f10fe649ffe19747907c3e45e26871acb5)) - Billie Thompson
