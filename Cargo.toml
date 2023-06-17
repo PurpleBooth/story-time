@@ -1,0 +1,23 @@
+[package]
+name = "story-time"
+version = "0.1.0"
+edition = "2021"
+
+license = "CC0-1.0"
+repository = "https://github.com/PurpleBooth/story-time"
+description = "Play a AI generated story as audio"
+keywords = ["ai", "audio", "story"]
+categories = ["multimedia::audio"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rodio = { version = "0.17.1", features = ["symphonia-all", "symphonia"] }
+reqwest = { version = "0.11.18", features = ["json", "gzip", "brotli", "deflate", "stream"] }
+tokio = { version = "1.28.2", features = ["full"] }
+serde_json = "1.0.97"
+chatgpt_rs = "1.1.10"
+miette = { version = "5.9.0", features = ["fancy"] }
+clap = { version = "4.3.4", features = ["derive", "cargo", "env"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json", "local-time"] }

@@ -1,0 +1,142 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+
+      - name: Conventional commits check
+        uses: oknozor/cocogitto-action@v3.4
+      - name: Check workflow files
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+        shell: bash
+      - uses: extractions/setup-just@v1
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Setup stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: Setup nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+      - name: Run lints
+        run: just lint
+      - run: cargo build
+        name: Try build
+      - run: cargo build --release
+        name: Try release build
+      - name: Start k8s cluster
+        run: kind create cluster --name kind
+      - name: Run test
+        run: just test
+      - name: Run e2e test
+        run: cargo run -- --help
+  dependabot:
+    name: Merge dependabot PRs
+    needs:
+      - test
+    permissions:
+      pull-requests: write
+      contents: write
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]' && github.ref != 'refs/heads/main'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Approve a PR
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  release:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - test
+    name: Release
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - uses: extractions/setup-just@v1
+      - run: cargo install cargo-edit
+      - name: Cocogitto release
+        id: release
+        continue-on-error: true
+        uses: oknozor/cocogitto-action@v3.4
+        with:
+          release: true
+      - name: Generate Changelog
+        if: steps.release.outputs.version != ''
+        run: cog changelog --at ${{ steps.release.outputs.version }} -t full_hash > GITHUB_CHANGELOG.md
+
+      - name: Upload github release
+        if: steps.release.outputs.version != ''
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: GITHUB_CHANGELOG.md
+          tag_name: ${{ steps.release.outputs.version }}
+  add-binaries:
+    needs: release
+    name: Build release binaries for ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: "write"
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ x86_64-pc-windows-gnu, x86_64-unknown-linux-musl, x86_64-apple-darwin ]
+    steps:
+      - uses: actions/checkout@master
+      - name: "Upload Binaries"
+        uses: "taiki-e/upload-rust-binary-action@v1"
+        with:
+          bin: "story-time"
+          target: ${{ matrix.target }}
+          ref: refs/tags/v${{ needs.release.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
