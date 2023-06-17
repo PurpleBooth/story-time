@@ -3,7 +3,7 @@ name = "story-time"
 version = "0.1.0"
 edition = "2021"
 
-license = "CC0-1.0"
+license = "UNLICENSE"
 repository = "https://github.com/PurpleBooth/story-time"
 description = "Play a AI generated story as audio"
 keywords = ["ai", "audio", "story"]
