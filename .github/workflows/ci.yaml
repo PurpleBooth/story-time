@@ -103,6 +103,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - uses: extractions/setup-just@v1
       - run: cargo install cargo-edit
+      - run: sudo apt-get -y install libasound2-dev
       - name: Cocogitto release
         id: release
         continue-on-error: true
