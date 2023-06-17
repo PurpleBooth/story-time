@@ -123,6 +123,7 @@ jobs:
     needs: release
     name: Build release binaries for ${{ matrix.destination.target }}
     runs-on: ${{ matrix.destination.os }}
+    if: needs.release.outputs.version != ''
     permissions:
       contents: "write"
     strategy:
