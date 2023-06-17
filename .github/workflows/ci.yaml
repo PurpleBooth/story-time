@@ -148,5 +148,5 @@ jobs:
         with:
           bin: "story-time"
           target: ${{ matrix.destination.target }}
-          ref: refs/tags/v${{ needs.release.outputs.version }}
+          ref: refs/tags/${{ needs.release.outputs.version }}
           token: ${{ secrets.GITHUB_TOKEN }}
