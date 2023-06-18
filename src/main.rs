@@ -33,7 +33,7 @@ use tokio::fs::File;
 use std::path::PathBuf;
 
 use tokio::io::AsyncWriteExt;
-use tracing::info_span;
+use tracing::instrument;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 /// Read out a story
@@ -63,6 +63,31 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    o11y()?;
+
+    let args = Args::parse();
+
+    let chatgpt_key: &str = &args.chat_gpt_key;
+    let style: &str = &args.style;
+    let prompt: &str = &args.prompt;
+    let message = generate_text(chatgpt_key, style, prompt).await?;
+
+    let elevenlabs_key: &str = &args.elevenlabs_key;
+    let voice: &str = &args.voice;
+
+    let stream: Vec<u8> = text_to_speech(elevenlabs_key, voice, &message).await?;
+
+    if let Some(path) = args.output {
+        let mut file: File = File::create(path).await.into_diagnostic()?;
+        file.write_all(&stream).await.into_diagnostic()?;
+    } else {
+        play_audio(stream)?;
+    }
+
+    Ok(())
+}
+
+fn o11y() -> Result<()> {
     miette::set_panic_hook();
 
     let fmt_layer = fmt::layer();
@@ -74,32 +99,47 @@ async fn main() -> Result<()> {
         .with(filter_layer)
         .with(fmt_layer)
         .init();
+    Ok(())
+}
 
-    let args = Args::parse();
-
-    let span = info_span!("write_story").entered();
-    let client = ChatGPT::new(&args.chat_gpt_key).into_diagnostic()?;
-
+#[instrument]
+async fn generate_text(chatgpt_key: &str, style: &str, prompt: &str) -> Result<String> {
+    let client = ChatGPT::new(chatgpt_key).into_diagnostic()?;
     let response = client
-        .new_conversation_directed(&args.style)
-        .send_message(&args.prompt)
+        .new_conversation_directed(style)
+        .send_message(prompt)
         .await
         .into_diagnostic()?;
     let message = response.message().clone().content;
-    span.exit();
+    Ok(message)
+}
 
-    let span = info_span!("record_story").entered();
+// Macro has panic in
+#[allow(clippy::panic_in_result_fn)]
+#[instrument]
+fn play_audio(stream: Vec<u8>) -> Result<()> {
+    let cursor = Cursor::new(stream);
+
+    let (_stream, stream_handle) = rodio::OutputStream::try_default().into_diagnostic()?;
+
+    let player = stream_handle.play_once(cursor).into_diagnostic()?;
+    player.sleep_until_end();
+    Ok(())
+}
+
+#[instrument]
+async fn text_to_speech(elevenlabs_key: &str, voice: &str, message: &str) -> Result<Vec<u8>> {
     let client = reqwest::Client::new();
 
     let mut url = Url::parse("https://api.elevenlabs.io/v1/text-to-speech").into_diagnostic()?;
     url.path_segments_mut()
         .expect("Infallible")
-        .extend(&[&args.voice]);
+        .extend(&[voice]);
 
     let stream = client
         .post(url)
         .header("accept", "audio/mpeg")
-        .header("xi-api-key", &args.elevenlabs_key)
+        .header("xi-api-key", elevenlabs_key)
         .json(&serde_json::json!({
             "text": &message,
             "model_id": "eleven_monolingual_v1",
@@ -112,23 +152,5 @@ async fn main() -> Result<()> {
         .bytes()
         .await
         .into_diagnostic()?;
-
-    span.exit();
-    if let Some(path) = args.output {
-        let mut file: File = File::create(path).await.into_diagnostic()?;
-        let span = info_span!("save_story").entered();
-        file.write_all(&stream).await.into_diagnostic()?;
-        span.exit();
-    } else {
-        let span = info_span!("play_story").entered();
-        let cursor = Cursor::new(stream);
-
-        let (_stream, stream_handle) = rodio::OutputStream::try_default().into_diagnostic()?;
-
-        let player = stream_handle.play_once(cursor).into_diagnostic()?;
-        player.sleep_until_end();
-        span.exit();
-    }
-
-    Ok(())
+    Ok(stream.to_vec())
 }
