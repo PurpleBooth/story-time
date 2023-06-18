@@ -23,8 +23,8 @@
     clippy::panic_in_result_fn
 )]
 
-mod audio;
-mod cli;
+mod io;
+mod logging;
 mod remote;
 
 use crate::remote::chatgpt::Repository as ChatgptRepository;
@@ -35,7 +35,7 @@ use miette::Result;
 
 use std::path::PathBuf;
 
-use crate::audio::Audio;
+use io::audio::Audio;
 use remote::chatgpt;
 use remote::elevenlabs;
 
@@ -84,19 +84,19 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Cli::parse();
-    cli::o11y(&args.rust_log)?;
+    logging::setup(&args.rust_log)?;
 
     match args.command {
         Commands::ReadAloud {
             chatgpt_key,
-            ref elevenlabs_key,
+            elevenlabs_key,
             chatgpt_prompt,
             chatgpt_direction,
             elevenlabs_voice,
             output,
         } => {
-            let chatgpt_client = chatgpt::Library::new(chatgpt_key);
-            let elevenlabs_client = elevenlabs::Library::try_new(elevenlabs_key)?;
+            let chatgpt_client = chatgpt::ChatGPT::try_new(chatgpt_key)?;
+            let elevenlabs_client = elevenlabs::Reqwest::try_new(elevenlabs_key)?;
 
             let message: String = chatgpt_client
                 .generate_text(chatgpt_direction, chatgpt_prompt)

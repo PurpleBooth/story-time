@@ -3,7 +3,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{fmt, EnvFilter};
 
-pub fn o11y(log_level: &str) -> miette::Result<()> {
+pub fn setup(log_level: &str) -> miette::Result<()> {
     miette::set_panic_hook();
 
     let fmt_layer = fmt::layer();

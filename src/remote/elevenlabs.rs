@@ -1,7 +1,7 @@
 use chatgpt::prelude::Url;
 
-use crate::audio::Audio;
-use crate::audio::Impl;
+use super::super::io::audio::Audio;
+use super::super::io::audio::Impl;
 use async_trait::async_trait;
 use miette::IntoDiagnostic;
 use miette::Result;
@@ -38,7 +38,7 @@ pub async fn text_to_speech<I: Audio + From<Vec<u8>>>(
 }
 
 #[derive(Debug)]
-pub struct Library {
+pub struct Reqwest {
     client: reqwest::Client,
 }
 
@@ -48,19 +48,19 @@ pub trait Repository<T: Audio> {
 }
 
 #[async_trait]
-impl Repository<Impl> for Library {
+impl Repository<Impl> for Reqwest {
     #[instrument]
     async fn text_to_speech(&self, voice: String, message: String) -> Result<Impl> {
         text_to_speech(&self.client, &voice, &message).await
     }
 }
 
-impl Library {
+impl Reqwest {
     /// Create a new instance of the Eleven Labs API client.
     // Instrument panic is false positive
     #[allow(clippy::panic_in_result_fn)]
     #[instrument]
-    pub fn try_new(key: &str) -> Result<Self> {
+    pub fn try_new(key: String) -> Result<Self> {
         let mut headers = HeaderMap::new();
         headers.insert("xi-api-key", key.try_into().into_diagnostic()?);
 

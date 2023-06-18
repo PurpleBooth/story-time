@@ -1,26 +1,14 @@
 use async_trait::async_trait;
-use chatgpt::client::ChatGPT;
+use chatgpt::client;
 use miette::IntoDiagnostic;
 use miette::Result;
 use std::fmt::Debug;
 
 use tracing::instrument;
 
-#[instrument]
-async fn generate_text(chatgpt_key: &str, style: &str, prompt: &str) -> Result<String> {
-    let client = ChatGPT::new(chatgpt_key).into_diagnostic()?;
-    let response = client
-        .new_conversation_directed(style)
-        .send_message(prompt)
-        .await
-        .into_diagnostic()?;
-    let message = response.message().clone().content;
-    Ok(message)
-}
-
 #[derive(Debug)]
-pub struct Library {
-    key: String,
+pub struct ChatGPT {
+    client: client::ChatGPT,
 }
 
 #[async_trait]
@@ -29,15 +17,27 @@ pub trait Repository {
 }
 
 #[async_trait]
-impl Repository for Library {
+impl Repository for ChatGPT {
     #[instrument]
     async fn generate_text(&self, style: String, prompt: String) -> Result<String> {
-        generate_text(&self.key, &style, &prompt).await
+        let response = self
+            .client
+            .new_conversation_directed(style)
+            .send_message(prompt)
+            .await
+            .into_diagnostic()?;
+        let message = response.message().clone().content;
+        Ok(message)
     }
 }
 
-impl Library {
-    pub const fn new(key: String) -> Self {
-        Self { key }
+impl ChatGPT {
+    // Instrument panic is false positive
+    #[allow(clippy::panic_in_result_fn)]
+    #[instrument]
+    pub fn try_new(key: String) -> Result<Self> {
+        let client = client::ChatGPT::new(key).into_diagnostic()?;
+
+        Ok(Self { client })
     }
 }
