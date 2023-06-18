@@ -22,3 +22,6 @@ clap = { version = "4.3.4", features = ["derive", "cargo", "env"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json", "local-time"] }
 async-trait = "0.1.68"
+
+[dev-dependencies]
+tempfile = "3.6.0"

@@ -46,3 +46,49 @@ impl From<Vec<u8>> for VecU8A {
         Self { stream }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[tokio::test]
+    async fn save_will_write_contents() {
+        let tempdir = tempdir().expect("Failed to create tempdir");
+        let path = tempdir.path().join("test.mp3");
+
+        let stream = VecU8A::from(vec![1, 2, 3]);
+        stream.save(&path).await.expect("Failed to save file");
+
+        let contents = tokio::fs::read(path).await.expect("Failed to read file");
+        assert_eq!(contents, vec![1, 2, 3]);
+    }
+
+    #[tokio::test]
+    async fn save_will_overwrite_an_existing_file() {
+        let tempdir = tempdir().expect("Failed to create tempdir");
+        let path = tempdir.path().join("test.mp3");
+        tokio::fs::write(&path, &[4, 5, 6])
+            .await
+            .expect("Failed to create file");
+
+        let stream = VecU8A::from(vec![1, 2, 3]);
+        stream.save(&path).await.expect("Failed to save file");
+
+        let contents = tokio::fs::read(path).await.expect("Failed to read file");
+        assert_eq!(contents, vec![1, 2, 3]);
+    }
+
+    #[tokio::test]
+    async fn play_will_play_contents() {
+        // Thank you https://github.com/mathiasbynens/small for contributing to the public domain
+        let smallest_syntactically_valid_mp3: Vec<u8> = vec![
+            255, 227, 24, 196, 0, 0, 0, 3, 72, 0, 0, 0, 0, 76, 65, 77, 69, 51, 46, 57, 56, 46, 50,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+
+        let stream = VecU8A::from(smallest_syntactically_valid_mp3);
+        stream.play().expect("Failed to play file");
+    }
+}
