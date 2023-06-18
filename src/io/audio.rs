@@ -79,6 +79,7 @@ mod tests {
         assert_eq!(contents, vec![1, 2, 3]);
     }
 
+    #[ignore = "This test requires an audio device, which most CI environments do not have"]
     #[tokio::test]
     async fn play_will_play_contents() {
         // Thank you https://github.com/mathiasbynens/small for contributing to the public domain
