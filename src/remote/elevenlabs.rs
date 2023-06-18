@@ -1,7 +1,7 @@
 use chatgpt::prelude::Url;
 
 use super::super::io::audio::Audio;
-use super::super::io::audio::Impl;
+use super::super::io::audio::VecU8A;
 use async_trait::async_trait;
 use miette::IntoDiagnostic;
 use miette::Result;
@@ -48,9 +48,9 @@ pub trait Repository<T: Audio> {
 }
 
 #[async_trait]
-impl Repository<Impl> for Reqwest {
+impl Repository<VecU8A> for Reqwest {
     #[instrument]
-    async fn text_to_speech(&self, voice: String, message: String) -> Result<Impl> {
+    async fn text_to_speech(&self, voice: String, message: String) -> Result<VecU8A> {
         text_to_speech(&self.client, &voice, &message).await
     }
 }

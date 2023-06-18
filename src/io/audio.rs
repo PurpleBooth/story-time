@@ -5,21 +5,8 @@ use std::path::Path;
 use tokio::io::AsyncWriteExt;
 use tracing::instrument;
 
-// Instrument panic is false positive
-#[allow(clippy::panic_in_result_fn)]
-#[instrument]
-fn play_audio(stream: Vec<u8>) -> Result<()> {
-    let cursor = Cursor::new(stream);
-
-    let (_stream, stream_handle) = rodio::OutputStream::try_default().into_diagnostic()?;
-
-    let player = stream_handle.play_once(cursor).into_diagnostic()?;
-    player.sleep_until_end();
-    Ok(())
-}
-
 #[derive(Debug)]
-pub struct Impl {
+pub struct VecU8A {
     stream: Vec<u8>,
 }
 
@@ -30,12 +17,19 @@ pub trait Audio {
 }
 
 #[async_trait]
-impl Audio for Impl {
+impl Audio for VecU8A {
     // Instrument panic is false positive
     #[allow(clippy::panic_in_result_fn)]
     #[instrument]
     fn play(&self) -> Result<()> {
-        play_audio(self.stream.clone())
+        let stream = self.stream.clone();
+        let cursor = Cursor::new(stream);
+
+        let (_stream, stream_handle) = rodio::OutputStream::try_default().into_diagnostic()?;
+
+        let player = stream_handle.play_once(cursor).into_diagnostic()?;
+        player.sleep_until_end();
+        Ok(())
     }
 
     #[instrument]
@@ -46,7 +40,7 @@ impl Audio for Impl {
     }
 }
 
-impl From<Vec<u8>> for Impl {
+impl From<Vec<u8>> for VecU8A {
     #[instrument]
     fn from(stream: Vec<u8>) -> Self {
         Self { stream }
