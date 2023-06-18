@@ -23,19 +23,18 @@
     clippy::panic_in_result_fn
 )]
 
+mod command;
 mod io;
 mod logging;
 mod remote;
 
-use crate::remote::chatgpt::Repository as ChatgptRepository;
-use crate::remote::elevenlabs::Repository as ElevenlabsRepository;
 use clap::{Parser, Subcommand};
 
 use miette::Result;
 
+use command::read_aloud;
 use std::path::PathBuf;
 
-use io::audio::Audio;
 use remote::chatgpt;
 use remote::elevenlabs;
 
@@ -98,18 +97,9 @@ async fn main() -> Result<()> {
             let chatgpt_client = chatgpt::ChatGPT::try_new(chatgpt_key)?;
             let elevenlabs_client = elevenlabs::Reqwest::try_new(elevenlabs_key)?;
 
-            let message: String = chatgpt_client
-                .generate_text(chatgpt_direction, chatgpt_prompt)
+            read_aloud::Command::new(chatgpt_client, elevenlabs_client)
+                .run(chatgpt_direction, chatgpt_prompt, elevenlabs_voice, output)
                 .await?;
-            let audio = elevenlabs_client
-                .text_to_speech(elevenlabs_voice, message)
-                .await?;
-
-            if let Some(ref path) = output {
-                audio.save(path).await?;
-            } else {
-                audio.play()?;
-            }
         }
     }
     Ok(())
