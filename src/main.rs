@@ -23,18 +23,21 @@
     clippy::panic_in_result_fn
 )]
 
-use chatgpt::prelude::*;
+mod audio;
+mod cli;
+mod remote;
+
+use crate::remote::chatgpt::Repository as ChatgptRepository;
+use crate::remote::elevenlabs::Repository as ElevenlabsRepository;
 use clap::{Parser, Subcommand};
-use miette::IntoDiagnostic;
+
 use miette::Result;
-use std::io::Cursor;
-use tokio::fs::File;
 
 use std::path::PathBuf;
 
-use tokio::io::AsyncWriteExt;
-use tracing::instrument;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use crate::audio::Audio;
+use remote::chatgpt;
+use remote::elevenlabs;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -81,96 +84,33 @@ enum Commands {
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Cli::parse();
-    o11y(&args.rust_log)?;
+    cli::o11y(&args.rust_log)?;
 
     match args.command {
         Commands::ReadAloud {
-            ref chatgpt_key,
+            chatgpt_key,
             ref elevenlabs_key,
-            ref chatgpt_prompt,
-            ref chatgpt_direction,
-            ref elevenlabs_voice,
+            chatgpt_prompt,
+            chatgpt_direction,
+            elevenlabs_voice,
             output,
         } => {
-            let message = generate_text(chatgpt_key, chatgpt_direction, chatgpt_prompt).await?;
-            let stream: Vec<u8> =
-                text_to_speech(elevenlabs_key, elevenlabs_voice, &message).await?;
+            let chatgpt_client = chatgpt::Library::new(chatgpt_key);
+            let elevenlabs_client = elevenlabs::Library::try_new(elevenlabs_key)?;
 
-            if let Some(path) = output {
-                let mut file: File = File::create(path).await.into_diagnostic()?;
-                file.write_all(&stream).await.into_diagnostic()?;
+            let message: String = chatgpt_client
+                .generate_text(chatgpt_direction, chatgpt_prompt)
+                .await?;
+            let audio = elevenlabs_client
+                .text_to_speech(elevenlabs_voice, message)
+                .await?;
+
+            if let Some(ref path) = output {
+                audio.save(path).await?;
             } else {
-                play_audio(stream)?;
+                audio.play()?;
             }
         }
     }
     Ok(())
-}
-
-fn o11y(log_level: &str) -> Result<()> {
-    miette::set_panic_hook();
-
-    let fmt_layer = fmt::layer();
-    let filter_layer = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new(log_level))
-        .into_diagnostic()?;
-
-    tracing_subscriber::registry()
-        .with(filter_layer)
-        .with(fmt_layer)
-        .init();
-    Ok(())
-}
-
-#[instrument]
-async fn generate_text(chatgpt_key: &str, style: &str, prompt: &str) -> Result<String> {
-    let client = ChatGPT::new(chatgpt_key).into_diagnostic()?;
-    let response = client
-        .new_conversation_directed(style)
-        .send_message(prompt)
-        .await
-        .into_diagnostic()?;
-    let message = response.message().clone().content;
-    Ok(message)
-}
-
-// Macro has panic in
-#[allow(clippy::panic_in_result_fn)]
-#[instrument]
-fn play_audio(stream: Vec<u8>) -> Result<()> {
-    let cursor = Cursor::new(stream);
-
-    let (_stream, stream_handle) = rodio::OutputStream::try_default().into_diagnostic()?;
-
-    let player = stream_handle.play_once(cursor).into_diagnostic()?;
-    player.sleep_until_end();
-    Ok(())
-}
-
-#[instrument]
-async fn text_to_speech(elevenlabs_key: &str, voice: &str, message: &str) -> Result<Vec<u8>> {
-    let client = reqwest::Client::new();
-
-    let mut url = Url::parse("https://api.elevenlabs.io/v1/text-to-speech").into_diagnostic()?;
-    url.path_segments_mut()
-        .expect("Infallible")
-        .extend(&[voice]);
-
-    let stream = client
-        .post(url)
-        .header("accept", "audio/mpeg")
-        .header("xi-api-key", elevenlabs_key)
-        .json(&serde_json::json!({
-            "text": &message,
-            "model_id": "eleven_monolingual_v1",
-        }))
-        .send()
-        .await
-        .into_diagnostic()?
-        .error_for_status()
-        .into_diagnostic()?
-        .bytes()
-        .await
-        .into_diagnostic()?;
-    Ok(stream.to_vec())
 }
