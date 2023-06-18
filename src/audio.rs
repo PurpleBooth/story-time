@@ -5,7 +5,7 @@ use std::path::Path;
 use tokio::io::AsyncWriteExt;
 use tracing::instrument;
 
-// Macro has panic in
+// Instrument panic is false positive
 #[allow(clippy::panic_in_result_fn)]
 #[instrument]
 fn play_audio(stream: Vec<u8>) -> Result<()> {
