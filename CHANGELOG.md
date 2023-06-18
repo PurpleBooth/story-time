@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v0.2.0](https://github.com/PurpleBooth/story-time/compare/v0.1.2..v0.2.0) - 2023-06-18
+#### Build system
+- Remove unused file - ([9e06128](https://github.com/PurpleBooth/story-time/commit/9e061288150092bdd5ce56b62489c500046dcbf6)) - Billie Thompson
+- Correct license identifier - ([6e188c5](https://github.com/PurpleBooth/story-time/commit/6e188c55a48e59acbc0bc7c90aa325eb709d7898)) - Billie Thompson
+#### Documentation
+- Add license - ([5b3b178](https://github.com/PurpleBooth/story-time/commit/5b3b1789a66edaed0aa88f91dec68efebc0fb6ce)) - Billie Thompson
+#### Features
+- Move the read aloud command into it's own command. This changes the user interface in a way that would break scripts - ([294bf5e](https://github.com/PurpleBooth/story-time/commit/294bf5e27a54141ca34425505bddab4452989d67)) - Billie Thompson
+#### Refactoring
+- Extract functions from main - ([2612387](https://github.com/PurpleBooth/story-time/commit/2612387454068e581c28312bb68a361e5ea7e2d6)) - Billie Thompson
+
+- - -
+
 ## [v0.1.0](https://github.com/PurpleBooth/story-time/compare/2a15d2fa63cf80aa13617d6db8a1df0c33091f0b..v0.1.0) - 2023-06-17
 #### Continuous Integration
 - Remove starting k8s - ([f59fa6f](https://github.com/PurpleBooth/story-time/commit/f59fa6f10fe649ffe19747907c3e45e26871acb5)) - Billie Thompson
