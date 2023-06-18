@@ -5,7 +5,7 @@ edition = "2021"
 
 license = "UNLICENSE"
 repository = "https://github.com/PurpleBooth/story-time"
-description = "Play a AI generated story as audio"
+description = "Tools for generating audio stories"
 keywords = ["ai", "audio", "story"]
 categories = ["multimedia::audio"]
 

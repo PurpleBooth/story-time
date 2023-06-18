@@ -24,7 +24,7 @@
 )]
 
 use chatgpt::prelude::*;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use miette::IntoDiagnostic;
 use miette::Result;
 use std::io::Cursor;
@@ -36,63 +36,83 @@ use tokio::io::AsyncWriteExt;
 use tracing::instrument;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
-/// Read out a story
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-struct Args {
-    /// Key for chatgpt
-    #[arg(short, long, env)]
-    chat_gpt_key: String,
-    /// Key for elevenlabs
-    #[arg(short, long, env)]
-    elevenlabs_key: String,
-    /// Prompt
-    #[arg(short, long, env)]
-    prompt: String,
-    /// A style to read in
-    #[arg(short, long, env, default_value = "You are reading aloud")]
-    style: String,
+#[command(propagate_version = true)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+    /// Log level
+    ///
+    /// Can be trace, debug, info, warn, error, or off. You can also put a module name after a comma
+    /// to set a specific log level for that module "error,hello=warn" turn on global error logging
+    /// and also warn for hello
+    #[arg(short, long, env, default_value = "info")]
+    rust_log: String,
+}
 
-    #[arg(short, long, env, default_value = "MF3mGyEYCl7XYWbV9V6O")]
-    voice: String,
+#[derive(Subcommand, Debug)]
+enum Commands {
+    /// Read a prompt from ChatGPT aloud
+    ReadAloud {
+        /// Key for ChatGPT
+        #[arg(short, long, env)]
+        chatgpt_key: String,
+        /// Key for ElevenLabs
+        #[arg(short, long, env)]
+        elevenlabs_key: String,
+        /// Prompt to give to ChatGPT
+        #[arg(short, long, env)]
+        chatgpt_prompt: String,
+        /// A style to read in
+        #[arg(short, long, env, default_value = "You are reading aloud")]
+        chatgpt_direction: String,
 
-    /// Save to a file rather than reading aloud
-    #[arg(short, long, env)]
-    output: Option<PathBuf>,
+        /// ID of the voice to use
+        #[arg(short, long, env, default_value = "MF3mGyEYCl7XYWbV9V6O")]
+        elevenlabs_voice: String,
+
+        /// Save to a file rather than reading aloud
+        #[arg(short, long, env)]
+        output: Option<PathBuf>,
+    },
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    o11y()?;
+    let args = Cli::parse();
+    o11y(&args.rust_log)?;
 
-    let args = Args::parse();
+    match args.command {
+        Commands::ReadAloud {
+            ref chatgpt_key,
+            ref elevenlabs_key,
+            ref chatgpt_prompt,
+            ref chatgpt_direction,
+            ref elevenlabs_voice,
+            output,
+        } => {
+            let message = generate_text(chatgpt_key, chatgpt_direction, chatgpt_prompt).await?;
+            let stream: Vec<u8> =
+                text_to_speech(elevenlabs_key, elevenlabs_voice, &message).await?;
 
-    let chatgpt_key: &str = &args.chat_gpt_key;
-    let style: &str = &args.style;
-    let prompt: &str = &args.prompt;
-    let message = generate_text(chatgpt_key, style, prompt).await?;
-
-    let elevenlabs_key: &str = &args.elevenlabs_key;
-    let voice: &str = &args.voice;
-
-    let stream: Vec<u8> = text_to_speech(elevenlabs_key, voice, &message).await?;
-
-    if let Some(path) = args.output {
-        let mut file: File = File::create(path).await.into_diagnostic()?;
-        file.write_all(&stream).await.into_diagnostic()?;
-    } else {
-        play_audio(stream)?;
+            if let Some(path) = output {
+                let mut file: File = File::create(path).await.into_diagnostic()?;
+                file.write_all(&stream).await.into_diagnostic()?;
+            } else {
+                play_audio(stream)?;
+            }
+        }
     }
-
     Ok(())
 }
 
-fn o11y() -> Result<()> {
+fn o11y(log_level: &str) -> Result<()> {
     miette::set_panic_hook();
 
     let fmt_layer = fmt::layer();
     let filter_layer = EnvFilter::try_from_default_env()
-        .or_else(|_| EnvFilter::try_new("info"))
+        .or_else(|_| EnvFilter::try_new(log_level))
         .into_diagnostic()?;
 
     tracing_subscriber::registry()
