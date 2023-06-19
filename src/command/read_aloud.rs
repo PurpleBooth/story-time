@@ -1,14 +1,17 @@
-use std::fmt::Debug;
-use std::path::Path;
+use std::{fmt::Debug, path::Path};
 
-use super::super::remote::chatgpt;
-use super::super::remote::elevenlabs;
-use crate::chatgpt::Direction;
-use crate::io::audio::Audio;
-use crate::remote::chatgpt::{Prompt, Repository as ChatGPTRepository};
-use crate::remote::elevenlabs::{Repository as ElevenlabsRepository, Voice};
 use miette::Result;
 use tracing::instrument;
+
+use super::super::remote::{chatgpt, elevenlabs};
+use crate::{
+    chatgpt::Direction,
+    io::audio::Audio,
+    remote::{
+        chatgpt::{Prompt, Repository as ChatGPTRepository},
+        elevenlabs::{Repository as ElevenlabsRepository, Voice},
+    },
+};
 
 #[derive(Debug)]
 pub struct Command {

@@ -1,7 +1,5 @@
 use miette::IntoDiagnostic;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 pub fn setup(log_level: &str) -> miette::Result<()> {
     miette::set_panic_hook();

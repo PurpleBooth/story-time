@@ -1,14 +1,13 @@
-use chatgpt::prelude::Url;
 use std::fmt::{Debug, Display, Formatter};
 
-use super::super::io::audio::Audio;
-use super::super::io::audio::VecU8A;
 use async_trait::async_trait;
-use miette::IntoDiagnostic;
-use miette::Result;
+use chatgpt::prelude::Url;
+use miette::{IntoDiagnostic, Result};
 use reqwest::header::HeaderMap;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+
+use super::super::io::audio::{Audio, VecU8A};
 
 #[derive(Debug)]
 pub struct Reqwest {

@@ -1,8 +1,7 @@
+use std::{fmt::Debug, io::Cursor, path::Path};
+
 use async_trait::async_trait;
 use miette::{IntoDiagnostic, Result};
-use std::fmt::Debug;
-use std::io::Cursor;
-use std::path::Path;
 use tokio::io::AsyncWriteExt;
 use tracing::instrument;
 
@@ -52,8 +51,9 @@ impl From<Vec<u8>> for VecU8A {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use tempfile::tempdir;
+
+    use super::*;
 
     #[tokio::test]
     async fn save_will_write_contents() {

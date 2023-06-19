@@ -1,11 +1,9 @@
-use async_trait::async_trait;
-use chatgpt::client;
-use miette::IntoDiagnostic;
-use miette::Result;
-use serde::Deserialize;
-use serde::Serialize;
 use std::fmt::{Debug, Display, Formatter};
 
+use async_trait::async_trait;
+use chatgpt::client;
+use miette::{IntoDiagnostic, Result};
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 #[derive(Debug)]
@@ -145,10 +143,7 @@ impl ChatGPT {
 
 #[cfg(test)]
 mod tests {
-    use super::Direction;
-    use super::Key;
-    use super::Message;
-    use super::Prompt;
+    use super::{Direction, Key, Message, Prompt};
 
     #[test]
     fn direction_is_a_string_in_json() {

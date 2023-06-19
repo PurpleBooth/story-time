@@ -28,15 +28,12 @@ mod io;
 mod logging;
 mod remote;
 
-use clap::{Parser, Subcommand};
-
-use miette::Result;
-
-use command::read_aloud;
 use std::path::PathBuf;
 
-use remote::chatgpt;
-use remote::elevenlabs;
+use clap::{Parser, Subcommand};
+use command::read_aloud;
+use miette::Result;
+use remote::{chatgpt, elevenlabs};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
