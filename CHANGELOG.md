@@ -2,6 +2,24 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v0.2.1](https://github.com/PurpleBooth/story-time/compare/v0.2.0..v0.2.1) - 2023-06-19
+#### Bug Fixes
+- Make short variables unique and add in test for subcommand, currently it is crashing. Not flagging as breaking because since the last breaking change it has been broken - ([09e0c44](https://github.com/PurpleBooth/story-time/commit/09e0c4483d54e2367f1c78a194590b111d75f476)) - Billie Thompson
+#### Documentation
+- Add the new commands docs to the readme - ([fc7b2db](https://github.com/PurpleBooth/story-time/commit/fc7b2db4afe3d4e741f9ce4f05c44ae5c3488550)) - Billie Thompson
+#### Refactoring
+- Move read aloud to its own command - ([a558076](https://github.com/PurpleBooth/story-time/commit/a558076906177dee39af88aa84e86778bdcc12cb)) - Billie Thompson
+- Inline text to speech method - ([e9aa169](https://github.com/PurpleBooth/story-time/commit/e9aa169fefaa3a7283f1b8d953b77101f87016b5)) - Billie Thompson
+- Rename audio impl to show it's implementation - ([1f99f06](https://github.com/PurpleBooth/story-time/commit/1f99f065f00b94552f5905f9d9803597b5b73eb2)) - Billie Thompson
+- Move to a more testable structure, limit the creation of clients to one - ([a1d5452](https://github.com/PurpleBooth/story-time/commit/a1d5452143df95d1d9da901a162ccced1a19ea6d)) - Billie Thompson
+- Standardise the comment above the allow for the panic - ([5811aa9](https://github.com/PurpleBooth/story-time/commit/5811aa9a1c5b53f6e44ede61ee8446dc9cac6445)) - Billie Thompson
+- Move remotes to replacable impls - ([77ba778](https://github.com/PurpleBooth/story-time/commit/77ba778b76bd3c55a4720a42f3f3c62aab1dccb9)) - Billie Thompson
+#### Tests
+- Disable audio device tests on ci - ([0da83f7](https://github.com/PurpleBooth/story-time/commit/0da83f70ae535d337392ce16fa77a82ffe07b4d1)) - Billie Thompson
+- Add tests for Audio - ([fb0f89e](https://github.com/PurpleBooth/story-time/commit/fb0f89eb6fbe3e06870d7acb9fbbe3b972a8a39a)) - Billie Thompson
+
+- - -
+
 ## [v0.1.0](https://github.com/PurpleBooth/story-time/compare/2a15d2fa63cf80aa13617d6db8a1df0c33091f0b..v0.1.0) - 2023-06-17
 #### Continuous Integration
 - Remove starting k8s - ([f59fa6f](https://github.com/PurpleBooth/story-time/commit/f59fa6f10fe649ffe19747907c3e45e26871acb5)) - Billie Thompson
