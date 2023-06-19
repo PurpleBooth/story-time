@@ -64,14 +64,14 @@ enum Commands {
         #[arg(short, long, env)]
         elevenlabs_key: String,
         /// Prompt to give to ChatGPT
-        #[arg(short, long, env)]
+        #[arg(short = 'p', long, env)]
         chatgpt_prompt: String,
         /// A style to read in
-        #[arg(short, long, env, default_value = "You are reading aloud")]
+        #[arg(short = 'd', long, env, default_value = "You are reading aloud")]
         chatgpt_direction: String,
 
         /// ID of the voice to use
-        #[arg(short, long, env, default_value = "MF3mGyEYCl7XYWbV9V6O")]
+        #[arg(short = 'v', long, env, default_value = "MF3mGyEYCl7XYWbV9V6O")]
         elevenlabs_voice: String,
 
         /// Save to a file rather than reading aloud

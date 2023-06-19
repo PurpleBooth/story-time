@@ -51,7 +51,9 @@ jobs:
       - name: Run test
         run: just test
       - name: Run e2e test
-        run: cargo run -- --help
+        run: |
+          cargo run -- --help
+          cargo run -- read-aloud --help
   dependabot:
     name: Merge dependabot PRs
     needs:
