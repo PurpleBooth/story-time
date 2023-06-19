@@ -30,17 +30,17 @@ The `read-aloud` command
     Read a prompt from ChatGPT aloud
 
     Usage: story-time read-aloud [OPTIONS] --chatgpt-key <CHATGPT_KEY> --elevenlabs-key <ELEVENLABS_KEY> --chatgpt-prompt <CHATGPT_PROMPT>
-
+    
     Options:
       -c, --chatgpt-key <CHATGPT_KEY>
               Key for ChatGPT [env: CHATGPT_KEY=]
       -e, --elevenlabs-key <ELEVENLABS_KEY>
               Key for ElevenLabs [env: ELEVENLABS_KEY=]
-      -c, --chatgpt-prompt <CHATGPT_PROMPT>
+      -p, --chatgpt-prompt <CHATGPT_PROMPT>
               Prompt to give to ChatGPT [env: CHATGPT_PROMPT=]
-      -c, --chatgpt-direction <CHATGPT_DIRECTION>
+      -d, --chatgpt-direction <CHATGPT_DIRECTION>
               A style to read in [env: CHATGPT_DIRECTION=] [default: "You are reading aloud"]
-      -e, --elevenlabs-voice <ELEVENLABS_VOICE>
+      -v, --elevenlabs-voice <ELEVENLABS_VOICE>
               ID of the voice to use [env: ELEVENLABS_VOICE=] [default: MF3mGyEYCl7XYWbV9V6O]
       -o, --output <OUTPUT>
               Save to a file rather than reading aloud [env: OUTPUT=]
