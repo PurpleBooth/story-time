@@ -1801,6 +1801,7 @@ dependencies = [
  "miette",
  "reqwest",
  "rodio",
+ "serde",
  "serde_json",
  "tempfile",
  "tokio",

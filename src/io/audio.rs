@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use miette::{IntoDiagnostic, Result};
+use std::fmt::Debug;
 use std::io::Cursor;
 use std::path::Path;
 use tokio::io::AsyncWriteExt;
@@ -13,7 +14,7 @@ pub struct VecU8A {
 #[async_trait]
 pub trait Audio {
     fn play(&self) -> Result<()>;
-    async fn save(&self, path: &Path) -> Result<()>;
+    async fn save<P: AsRef<Path> + Debug + Sync + Send>(&self, path: P) -> Result<()>;
 }
 
 #[async_trait]
@@ -33,8 +34,10 @@ impl Audio for VecU8A {
     }
 
     #[instrument]
-    async fn save(&self, path: &Path) -> Result<()> {
-        let mut file = tokio::fs::File::create(path).await.into_diagnostic()?;
+    async fn save<P: AsRef<Path> + Debug + Sync + Send>(&self, path: P) -> Result<()> {
+        let mut file = tokio::fs::File::create(path.as_ref())
+            .await
+            .into_diagnostic()?;
         file.write_all(&self.stream).await.into_diagnostic()?;
         Ok(())
     }

@@ -59,20 +59,20 @@ enum Commands {
     ReadAloud {
         /// Key for ChatGPT
         #[arg(short, long, env)]
-        chatgpt_key: String,
+        chatgpt_key: chatgpt::Key,
         /// Key for ElevenLabs
         #[arg(short, long, env)]
-        elevenlabs_key: String,
+        elevenlabs_key: elevenlabs::Key,
         /// Prompt to give to ChatGPT
         #[arg(short = 'p', long, env)]
-        chatgpt_prompt: String,
+        chatgpt_prompt: chatgpt::Prompt,
         /// A style to read in
         #[arg(short = 'd', long, env, default_value = "You are reading aloud")]
-        chatgpt_direction: String,
+        chatgpt_direction: chatgpt::Direction,
 
         /// ID of the voice to use
         #[arg(short = 'v', long, env, default_value = "MF3mGyEYCl7XYWbV9V6O")]
-        elevenlabs_voice: String,
+        elevenlabs_voice: elevenlabs::Voice,
 
         /// Save to a file rather than reading aloud
         #[arg(short, long, env)]
