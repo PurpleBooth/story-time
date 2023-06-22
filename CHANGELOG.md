@@ -2,6 +2,19 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## [v0.3.0](https://github.com/PurpleBooth/story-time/compare/v0.2.1..v0.3.0) - 2023-06-22
+#### Bug Fixes
+- **(deps)** bump clap from 4.3.4 to 4.3.5 - ([7383738](https://github.com/PurpleBooth/story-time/commit/7383738fe98c7e88929b61b44a5612e5a5f0aea1)) - dependabot[bot]
+#### Documentation
+- Correct the switches in the read-aloud ui - ([909f93e](https://github.com/PurpleBooth/story-time/commit/909f93e641fdd5fea26cbe860f9512c12ef4d788)) - Billie Thompson
+#### Features
+- Early version of some way of making podcasts from rss feeds - ([0a786d3](https://github.com/PurpleBooth/story-time/commit/0a786d3ed8c86f974951b68af01be087d74641b5)) - Billie Thompson
+#### Refactoring
+- Make the imports ordered to reduce diffs and maintenance - ([34b67fc](https://github.com/PurpleBooth/story-time/commit/34b67fca3ab6801471d1a74711c1970d2c9a3f21)) - Billie Thompson
+- Switch to newtypes for the values - ([19871f7](https://github.com/PurpleBooth/story-time/commit/19871f7eebfa6c8242b86a6093f08c968fefa9fa)) - Billie Thompson
+
+- - -
+
 ## [v0.1.0](https://github.com/PurpleBooth/story-time/compare/2a15d2fa63cf80aa13617d6db8a1df0c33091f0b..v0.1.0) - 2023-06-17
 #### Continuous Integration
 - Remove starting k8s - ([f59fa6f](https://github.com/PurpleBooth/story-time/commit/f59fa6f10fe649ffe19747907c3e45e26871acb5)) - Billie Thompson
