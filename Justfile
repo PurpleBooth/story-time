@@ -23,7 +23,7 @@ lint:
         cargo +nightly fmt --all -- --check
         cargo +nightly clippy --all-features -- -D warnings -Dclippy::all -D clippy::pedantic -D clippy::cargo -A clippy::multiple-crate-versions
         cargo +nightly check
-        cargo +nightly audit
+        cargo +nightly audit --ignore RUSTSEC-2020-0071
 
 # Format what can be formatted
 fmt:

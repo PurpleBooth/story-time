@@ -28,12 +28,19 @@ mod io;
 mod logging;
 mod remote;
 
-use std::path::PathBuf;
+use std::{ops::Sub, path::PathBuf, str::FromStr, time};
 
+use chrono::Utc;
 use clap::{Parser, Subcommand};
 use command::read_aloud;
-use miette::Result;
+use html2text::render::text_renderer::TrivialDecorator;
+use miette::{miette, IntoDiagnostic, Result};
+use quick_xml::escape as xml_escape;
 use remote::{chatgpt, elevenlabs};
+use reqwest::Url;
+use serde::{Deserialize, Serialize};
+
+use crate::{io::audio::Audio, remote::elevenlabs::Repository};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -75,9 +82,86 @@ enum Commands {
         #[arg(short, long, env)]
         output: Option<PathBuf>,
     },
+    /// Read a prompt from ChatGPT aloud
+    FeedToAudio {
+        /// Url of the RSS feed
+        #[arg(short, long, env)]
+        url: Url,
+        /// Key for ElevenLabs
+        #[arg(short, long, env)]
+        elevenlabs_key: elevenlabs::Key,
+
+        /// ID of the voice to use
+        #[arg(short = 'v', long, env, default_value = "MF3mGyEYCl7XYWbV9V6O")]
+        elevenlabs_voice: elevenlabs::Voice,
+
+        /// Key for Google Translate
+        #[arg(short, long, env)]
+        google_translate_key: String,
+
+        /// Target Language
+        #[arg(short, long, env, default_value = "en")]
+        google_translate_target_lang: String,
+
+        /// Articles published after this date
+        #[arg(short = 'a', long, env, value_parser = parse_date)]
+        articles_published_after: Option<time::SystemTime>,
+
+        /// Articles published within this duration
+        #[arg(short = 'w', long, env, value_parser = parse_duration)]
+        articles_published_within: Option<time::Duration>,
+
+        /// Save to a file rather than reading aloud
+        #[arg(short, long, env)]
+        output: Option<PathBuf>,
+    },
+}
+
+fn parse_duration(args: &str) -> Result<time::Duration, humantime::DurationError> {
+    humantime::Duration::from_str(args).map(humantime::Duration::into)
+}
+
+fn parse_date(args: &str) -> Result<time::SystemTime, humantime::TimestampError> {
+    humantime::parse_rfc3339_weak(args)
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+struct Feed {
+    title: Option<String>,
+    items: Vec<Item>,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+struct Item {
+    title: Option<String>,
+    time: Option<chrono::DateTime<Utc>>,
+    content: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+struct GoogleTranslation {
+    #[serde(rename = "translatedText")]
+    translated_text: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+struct GoogleTranslateResponse {
+    data: GoogleTranslateTranslations,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+struct GoogleTranslateTranslations {
+    translations: Vec<GoogleTranslation>,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+struct GoogleTranslateRequest {
+    q: Vec<String>,
+    target: String,
 }
 
 #[tokio::main]
+#[allow(clippy::too_many_lines)]
 async fn main() -> Result<()> {
     let args = Cli::parse();
     logging::setup(&args.rust_log)?;
@@ -97,6 +181,153 @@ async fn main() -> Result<()> {
             read_aloud::Command::new(chatgpt_client, elevenlabs_client)
                 .run(chatgpt_direction, chatgpt_prompt, elevenlabs_voice, output)
                 .await?;
+        }
+        Commands::FeedToAudio {
+            url,
+            elevenlabs_key,
+            elevenlabs_voice,
+            google_translate_key,
+            google_translate_target_lang,
+            articles_published_after,
+            articles_published_within,
+            output,
+        } => {
+            let elevenlabs_client = elevenlabs::Reqwest::try_new(elevenlabs_key)?;
+            let client = reqwest::Client::new();
+            let original_host = url.host().ok_or_else(|| miette!("No host"))?;
+
+            let mut morss_url = url.clone();
+            morss_url.set_host(Some("morss.it")).into_diagnostic()?;
+            {
+                let mut path_segments = morss_url.path_segments_mut().expect("Infallible");
+                path_segments.clear();
+                path_segments.extend(&[":format=json:cors", &original_host.to_string()]);
+                let original_path_segments: Vec<&str> = url
+                    .path_segments()
+                    .map(Iterator::collect)
+                    .unwrap_or_default();
+                path_segments.extend(&original_path_segments);
+            }
+            morss_url.set_query(url.query());
+
+            let feed = client
+                .get(morss_url.clone())
+                .send()
+                .await
+                .into_diagnostic()?
+                .text()
+                .await
+                .into_diagnostic()?;
+
+            let feed_contents: Feed = serde_json::from_str(feed.as_str()).into_diagnostic()?;
+
+            // Create a DeepL instance for our account.
+            let deepl = reqwest::Client::builder().build().into_diagnostic()?;
+
+            for (article_counter, entry) in feed_contents
+                .items
+                .into_iter()
+                .filter(|entry| {
+                    match (
+                        entry.time,
+                        articles_published_after.map(chrono::DateTime::<Utc>::from),
+                        articles_published_within
+                            .map(|x| time::SystemTime::now().sub(x))
+                            .map(chrono::DateTime::<Utc>::from),
+                    ) {
+                        (Some(_), None, None) | (None, _, _) => true,
+                        (Some(publish_time), None, Some(cutoff_time))
+                        | (Some(publish_time), Some(cutoff_time), None) => {
+                            publish_time > cutoff_time
+                        }
+                        (Some(publish_time), Some(left), Some(right)) => {
+                            publish_time > left.max(right)
+                        }
+                    }
+                })
+                .enumerate()
+            {
+                let mut buf = String::new();
+                if let Some(ref title) = entry.title {
+                    buf.push_str(title);
+                    buf.push_str("\n\n");
+                }
+
+                let content = entry.content.as_bytes();
+                let decorator = TrivialDecorator::new();
+                let clean_text =
+                    html2text::from_read_with_decorator(content, usize::MAX, decorator);
+                buf.push_str(&clean_text);
+                buf.push_str("\n\n");
+
+                let mut url =
+                    Url::parse("https://translation.googleapis.com/language/translate/v2")
+                        .into_diagnostic()?;
+                url.query_pairs_mut()
+                    .append_pair("key", &google_translate_key);
+
+                let response: GoogleTranslateResponse = deepl
+                    .post(url)
+                    .json(&GoogleTranslateRequest {
+                        q: vec![buf],
+                        target: google_translate_target_lang.clone(),
+                    })
+                    .send()
+                    .await
+                    .into_diagnostic()?
+                    .error_for_status()
+                    .into_diagnostic()?
+                    .json()
+                    .await
+                    .into_diagnostic()?;
+
+                let translated_text = response
+                    .data
+                    .translations
+                    .into_iter()
+                    .map(|x| x.translated_text)
+                    .collect::<Vec<_>>()
+                    .join("\n\n");
+
+                for (paragraph_counter, text) in translated_text
+                    .split_inclusive('.')
+                    .fold(vec![String::new()], |acc, text| {
+                        let mut new_vec = acc;
+                        let mut last_item = new_vec
+                            .pop()
+                            .expect("We initialise the list with at least one item");
+
+                        if last_item.len() + text.len() > 5000 {
+                            new_vec.push(last_item);
+                            new_vec.push(text.to_string());
+                        } else {
+                            last_item.push_str(text);
+                            new_vec.push(last_item);
+                        }
+
+                        new_vec
+                    })
+                    .into_iter()
+                    .enumerate()
+                {
+                    let audio = elevenlabs_client
+                        .text_to_speech(
+                            elevenlabs_voice.clone(),
+                            xml_escape::unescape(&text)
+                                .map(|x| x.to_string())
+                                .unwrap_or(text)
+                                .to_string(),
+                        )
+                        .await?;
+
+                    if let Some(mut path) = output.clone() {
+                        path.push(format!("{}-{}.mp3", paragraph_counter, article_counter));
+                        audio.save(path).await?;
+                    } else {
+                        audio.play()?;
+                    }
+                }
+            }
         }
     }
     Ok(())

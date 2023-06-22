@@ -116,7 +116,7 @@ impl Repository<VecU8A> for Reqwest {
             .expect("Infallible")
             .extend(&[&String::from(voice.into())]);
 
-        let stream = client
+        let response = client
             .post(url)
             .header("accept", "audio/mpeg")
             .json(&serde_json::json!({
@@ -125,13 +125,21 @@ impl Repository<VecU8A> for Reqwest {
             }))
             .send()
             .await
-            .into_diagnostic()?
+            .into_diagnostic()?;
+        if let Err(error) = response.error_for_status_ref() {
+            let error_body = response.text().await.into_diagnostic()?;
+            tracing::debug!("Failed to get audio {}", &error_body);
+
+            return Err(error).into_diagnostic();
+        }
+
+        let body = response
             .error_for_status()
             .into_diagnostic()?
             .bytes()
             .await
             .into_diagnostic()?;
-        Ok(stream.to_vec().into())
+        Ok(body.to_vec().into())
     }
 }
 
