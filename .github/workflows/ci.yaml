@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Conventional commits check
-        uses: oknozor/cocogitto-action@v3.4
+        uses: oknozor/cocogitto-action@v3.5
       - run: sudo apt-get -y install libasound2-dev
       - name: Check workflow files
         run: |
@@ -109,7 +109,7 @@ jobs:
       - name: Cocogitto release
         id: release
         continue-on-error: true
-        uses: oknozor/cocogitto-action@v3.4
+        uses: oknozor/cocogitto-action@v3.5
         with:
           release: true
       - name: Generate Changelog
