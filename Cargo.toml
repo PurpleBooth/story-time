@@ -24,7 +24,7 @@ tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json", "lo
 async-trait = "0.1.73"
 serde = { version = "1.0.188", features = ["derive"] }
 feed-rs = "1.3.0"
-chrono = { version = "0.4.29", features = ["serde"] }
+chrono = { version = "0.4.30", features = ["serde"] }
 humantime = { version = "2.1.0" }
 html2text = "0.6.0"
 deepl-api = "0.4.3"
