@@ -23,7 +23,7 @@ jobs:
           ./actionlint -color
         shell: bash
       - uses: extractions/setup-just@v1
-      - uses: actions/cache@v3
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
@@ -94,7 +94,7 @@ jobs:
         with:
           toolchain: nightly
           override: true
-      - uses: actions/cache@v3
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/bin/
