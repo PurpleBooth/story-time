@@ -22,7 +22,7 @@ jobs:
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint -color
         shell: bash
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v4
       - uses: actions/cache@v6
         with:
           path: |
@@ -103,7 +103,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - uses: extractions/setup-just@v1
+      - uses: extractions/setup-just@v4
       - run: cargo install cargo-edit
       - run: sudo apt-get -y install libasound2-dev
       - name: Cocogitto release
